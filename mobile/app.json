@@ -1,41 +1,67 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Jaumo Clone",
+    "slug": "jaumo-clone",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": "your-app-scheme",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.jaumoclone",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to location to find matches near you.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to location to find matches near you.",
+        "NSCameraUsageDescription": "This app needs access to the camera to take profile photos.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photos to upload profile pictures."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      },
+      "package": "com.yourcompany.jaumoclone",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
-      "expo-router",
       [
-        "expo-splash-screen",
+        "expo-location",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find matches near you."
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your matches."
+        }
+      ],
+      "expo-router"
     ],
-    "experiments": {
-      "typedRoutes": true
+    "web": {
+      "bundler": "metro"
     }
   }
 }
