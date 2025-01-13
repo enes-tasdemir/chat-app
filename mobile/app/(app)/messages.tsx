@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { List, Avatar, Divider } from 'react-native-paper';
 import { Link } from 'expo-router';
-import { database } from '@/utils/firebase';
-import { ref, onValue } from 'firebase/database';
+import api from '@/utils/api';
 import { useAuth } from '@/providers/AuthProvider';
 import { Match } from '@/types';
 
@@ -12,22 +11,17 @@ export default function MessagesScreen() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    loadMatches();
+  }, []);
 
-    const matchesRef = ref(database, `users/${user.id}/matches`);
-    const unsubscribe = onValue(matchesRef, (snapshot) => {
-      const matchesData = snapshot.val();
-      if (matchesData) {
-        const matchesList = Object.entries(matchesData).map(([id, data]: [string, any]) => ({
-          id,
-          ...data,
-        }));
-        setMatches(matchesList);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+  const loadMatches = async () => {
+    try {
+      const response = await api.get('/matches');
+      setMatches(response.data);
+    } catch (error) {
+      console.error('Load matches error:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -38,12 +32,12 @@ export default function MessagesScreen() {
         renderItem={({ item }) => (
           <Link href={`/chat/${item.id}`} asChild>
             <List.Item
-              title={item.users.find((userId) => userId !== user?.id)}
+              title={item.matchedUser.name}
               description={item.lastMessage?.text ?? 'No messages yet'}
               left={() => (
                 <Avatar.Image
                   size={50}
-                  source={{ uri: item.photoURL }}
+                  source={{ uri: item.matchedUser.photoURL }}
                 />
               )}
             />

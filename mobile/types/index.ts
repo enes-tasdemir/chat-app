@@ -3,29 +3,43 @@ export interface User {
   name: string;
   email: string;
   photoURL: string;
-  bio: string;
+  bio?: string;
   age: number;
-  gender: string;
-  location: {
+  gender?: string;
+  interests: string[];
+  location?: {
     latitude: number;
     longitude: number;
   };
-  interests: string[];
-  premium: boolean;
-}
-
-export interface Message {
-  id?: string;
-  senderId: string;
-  text: string;
-  timestamp: number;
-  type: 'text' | 'image';
-  imageUrl?: string;
+  distance?: number;
+  lastActive?: string;
+  online?: boolean;
 }
 
 export interface Match {
   id: string;
-  users: string[];
-  timestamp: number;
+  userId: string;
+  matchedUserId: string;
+  matchedUser: User;
+  createdAt: string;
   lastMessage?: Message;
+}
+
+export interface Message {
+  id: string;
+  chatId: string;
+  senderId: string;
+  text?: string;
+  imageUrl?: string;
+  type: 'text' | 'image';
+  timestamp: string;
+  read: boolean;
+}
+
+export interface Chat {
+  id: string;
+  participants: string[];
+  lastMessage?: Message;
+  createdAt: string;
+  updatedAt: string;
 } 

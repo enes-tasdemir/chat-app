@@ -2,60 +2,60 @@ import { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { Card, Title, Paragraph, Button } from 'react-native-paper';
 import { useAuth } from '@/providers/AuthProvider';
-import { database } from '@/utils/firebase';
-import { ref, onValue } from 'firebase/database';
+import api from '@/utils/api';
 import { Match, User } from '@/types';
 
 export default function MatchesScreen() {
   const [matches, setMatches] = useState<Match[]>([]);
-  const [matchedUsers, setMatchedUsers] = useState<User[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    loadMatches();
+  }, []);
 
-    const matchesRef = ref(database, `users/${user.id}/matches`);
-    const unsubscribe = onValue(matchesRef, async (snapshot) => {
-      const matchesData = snapshot.val();
-      if (matchesData) {
-        const matchesList = Object.entries(matchesData).map(([id, data]: [string, any]) => ({
-          id,
-          ...data,
-        }));
-        setMatches(matchesList);
+  const loadMatches = async () => {
+    try {
+      const response = await api.get('/matches');
+      setMatches(response.data);
+    } catch (error) {
+      console.error('Load matches error:', error);
+    }
+  };
 
-        // Fetch matched users' profiles
-        const userProfiles = await Promise.all(
-          matchesList.map(async (match) => {
-            const userId = match.users.find((id) => id !== user.id);
-            const userRef = ref(database, `users/${userId}`);
-            const userSnapshot = await get(userRef);
-            return { id: userId, ...userSnapshot.val() };
-          })
-        );
-        setMatchedUsers(userProfiles);
-      }
-    });
+  const handleMessage = async (matchId: string) => {
+    try {
+      const response = await api.post(`/chats`, { matchId });
+      // Chat ekranına yönlendir
+      router.push(`/chat/${response.data.chatId}`);
+    } catch (error) {
+      console.error('Create chat error:', error);
+    }
+  };
 
-    return () => unsubscribe();
-  }, [user]);
+  const handleUnmatch = async (matchId: string) => {
+    try {
+      await api.delete(`/matches/${matchId}`);
+      loadMatches(); // Listeyi yenile
+    } catch (error) {
+      console.error('Unmatch error:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={matchedUsers}
-        numColumns={2}
+        data={matches}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={styles.card}>
-            <Card.Cover source={{ uri: item.photoURL }} />
+            <Card.Cover source={{ uri: item.matchedUser.photoURL }} />
             <Card.Content>
-              <Title>{item.name}</Title>
-              <Paragraph>{item.age} years old</Paragraph>
+              <Title>{item.matchedUser.name}</Title>
+              <Paragraph>{item.matchedUser.bio}</Paragraph>
             </Card.Content>
             <Card.Actions>
-              <Button onPress={() => {}}>Message</Button>
-              <Button onPress={() => {}}>View Profile</Button>
+              <Button onPress={() => handleMessage(item.id)}>Message</Button>
+              <Button onPress={() => handleUnmatch(item.id)}>Unmatch</Button>
             </Card.Actions>
           </Card>
         )}
@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   card: {
-    flex: 1,
-    margin: 5,
+    marginBottom: 10,
   },
 }); 

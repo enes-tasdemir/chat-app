@@ -1,35 +1,76 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList } from 'react-native';
-import { Card, Title } from 'react-native-paper';
-import { LocationService } from '@/services/LocationService';
+import { View, StyleSheet } from 'react-native';
 import { UserCard } from '@/components/cards/UserCard';
-import { useProfiles } from '@/hooks/useProfiles';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import api from '@/utils/api';
+import { User } from '@/types';
 
 export default function DiscoverScreen() {
-  const { profiles, loading, loadMore } = useProfiles();
-  const [location, setLocation] = useState(null);
+  const [currentProfile, setCurrentProfile] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const initLocation = async () => {
-      try {
-        const currentLocation = await LocationService.getCurrentLocation();
-        setLocation(currentLocation);
-      } catch (error) {
-        console.error('Location error:', error);
-      }
-    };
-
-    initLocation();
+    loadNextProfile();
   }, []);
+
+  const loadNextProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/users/discover/next');
+      setCurrentProfile(response.data);
+      setError(null);
+    } catch (error) {
+      setError('Failed to load profiles');
+      console.error('Load profile error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!currentProfile) return;
+    try {
+      await api.post(`/users/${currentProfile.id}/like`);
+      loadNextProfile();
+    } catch (error) {
+      console.error('Like error:', error);
+    }
+  };
+
+  const handleDislike = async () => {
+    if (!currentProfile) return;
+    try {
+      await api.post(`/users/${currentProfile.id}/dislike`);
+      loadNextProfile();
+    } catch (error) {
+      console.error('Dislike error:', error);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={loadNextProfile} />;
+  }
+
+  if (!currentProfile) {
+    return (
+      <View style={styles.container}>
+        <ErrorMessage message="No more profiles to show" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={profiles}
-        renderItem={({ item }) => <UserCard user={item} />}
-        keyExtractor={(item) => item.id}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
+      <UserCard
+        user={currentProfile}
+        onLike={handleLike}
+        onDislike={handleDislike}
       />
     </View>
   );
@@ -38,5 +79,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 

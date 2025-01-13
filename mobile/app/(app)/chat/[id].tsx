@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet } from 'react-native';
 import { TextInput, IconButton } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
-import { MessageService } from '@/services/MessageService';
+import api from '@/utils/api';
 import { Message } from '@/types';
 
 export default function ChatScreen() {
@@ -13,26 +13,30 @@ export default function ChatScreen() {
   const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
-    if (!id) return;
-
-    const unsubscribe = MessageService.subscribeToChat(id as string, (updatedMessages) => {
-      setMessages(updatedMessages);
-    });
-
-    return () => unsubscribe();
+    loadMessages();
+    const interval = setInterval(loadMessages, 3000); // Poll every 3 seconds
+    return () => clearInterval(interval);
   }, [id]);
 
+  const loadMessages = async () => {
+    try {
+      const response = await api.get(`/chats/${id}/messages`);
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Load messages error:', error);
+    }
+  };
+
   const handleSend = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim()) return;
 
     try {
-      await MessageService.sendMessage(id as string, {
-        senderId: user.id,
+      await api.post(`/chats/${id}/messages`, {
         text: newMessage,
-        timestamp: Date.now(),
-        type: 'text',
+        type: 'text'
       });
       setNewMessage('');
+      loadMessages();
     } catch (error) {
       console.error('Send message error:', error);
     }

@@ -10,8 +10,8 @@ export default function Index() {
   }
 
   // Kullanıcının durumuna göre yönlendirme yap
+  return <Redirect href="/(app)/discover" />;
   if (user) {
-    return <Redirect href="/(app)/discover" />;
   }
 
   return <Redirect href="/(auth)/login" />;

@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, TextInput, Avatar, List } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/providers/AuthProvider';
-import { storage } from '@/utils/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import api from '@/utils/api';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -25,21 +24,32 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0].uri) {
-      const uri = result.assets[0].uri;
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      
-      const storageRef = ref(storage, `profile-photos/${user.id}`);
-      await uploadBytes(storageRef, blob);
-      const photoURL = await getDownloadURL(storageRef);
-      
-      // Update user profile photo URL in database
+      const formData = new FormData();
+      formData.append('photo', {
+        uri: result.assets[0].uri,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      });
+
+      try {
+        await api.post('/users/profile/photo', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } catch (error) {
+        console.error('Upload photo error:', error);
+      }
     }
   };
 
   const handleSave = async () => {
-    // Save profile changes to database
-    setEditing(false);
+    try {
+      await api.put('/users/profile', profile);
+      setEditing(false);
+    } catch (error) {
+      console.error('Update profile error:', error);
+    }
   };
 
   return (

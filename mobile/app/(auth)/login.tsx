@@ -7,13 +7,21 @@ import { useAuth } from '@/providers/AuthProvider';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn } = useAuth();
+  const { signIn, createDemoUser } = useAuth();
 
   const handleLogin = async () => {
     try {
       await signIn(email, password);
     } catch (error) {
       console.error('Login error:', error);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    try {
+      await createDemoUser();
+    } catch (error) {
+      console.error('Demo login error:', error);
     }
   };
 
@@ -35,6 +43,13 @@ export default function LoginScreen() {
       <Button mode="contained" onPress={handleLogin} style={styles.button}>
         Login
       </Button>
+      <Button 
+        mode="outlined" 
+        onPress={handleDemoLogin} 
+        style={styles.demoButton}
+      >
+        Try Demo Account
+      </Button>
       <Link href="/register" style={styles.link}>
         Don't have an account? Register
       </Link>
@@ -53,6 +68,9 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 12,
+  },
+  demoButton: {
+    marginTop: 8,
   },
   link: {
     marginTop: 20,
